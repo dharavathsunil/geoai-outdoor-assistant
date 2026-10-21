@@ -60,29 +60,30 @@ def window_conditions(rows, s, e):
     rs = [r for r in rows if s <= r["dt"] < e]
     if not rs:
         return {}, False
-    avg = lambda k: sum(r[k] for r in rs) / len(rs)
+    fl = [r["feels"] for r in rs]
     aqs = [r["aqi"] for r in rs if r["aqi"] is not None]
     cond = {
-        "feels_like_c": round(avg("feels"), 1),
+        "feels_like_min_c": round(min(fl), 1),
+        "feels_like_max_c": round(max(fl), 1),
         "rain_chance_pct": max(r["rain_p"] for r in rs),
-        "wind_kmh": round(avg("wind"), 1),
+        "wind_kmh": round(sum(r["wind"] for r in rs) / len(rs), 1),
         "wind_from": compass(rs[0]["wind_dir"]),
         "uv_index": round(max(r["uv"] for r in rs), 1),
     }
     if aqs:
-        cond["aqi"] = max(aqs)
+        cond["aqi_min"], cond["aqi_max"] = min(aqs), max(aqs)
     return cond, any(not r["daylight"] for r in rs)
 
 
 def prep_tips(act, prof, cond, dark, cons_text):
     t = ["water and your phone"]
-    if cond.get("feels_like_c", 0) >= 28:
+    if cond.get("feels_like_max_c", 0) >= 28:
         t.append("light breathable clothing and a cap")
     if cond.get("uv_index", 0) >= 6:
         t.append("sunscreen and sunglasses")
     if cond.get("rain_chance_pct", 0) >= 30:
         t.append("a light rain jacket or umbrella")
-    if cond.get("aqi", 0) > 100:
+    if cond.get("aqi_max", 0) > 100:
         t.append("a well-fitted N95 mask")
     if dark:
         t.append("a torch or phone light, reflective clothing, and stay on lit paths")

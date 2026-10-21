@@ -47,7 +47,7 @@ def verify(text, nf):
         return False, "place not mentioned"
     if re.search(r"\b(am|pm)\b", low):
         return False, "12-hour time used"
-    if not nf["safe_window_found"] and not low.startswith("not recommended"):
+    if not nf["safe_window_found"] and "not recommended" not in low[:140]:
         return False, "did not say not recommended"
     if nf["safe_window_found"] and ("not recommended" in low or "least bad" in low):
         return False, "contradicts a safe window"
@@ -93,10 +93,12 @@ def render(f, narrative):
     parts = [head, narrative]
 
     bits = []
-    if "feels_like_c" in c:
-        bits.append(f"feels like {c['feels_like_c']}°C")
-    if "aqi" in c:
-        bits.append(f"AQI {c['aqi']}")
+    if "feels_like_min_c" in c:
+        lo, hi = c["feels_like_min_c"], c["feels_like_max_c"]
+        bits.append(f"feels like {lo}°C" if lo == hi else f"feels like {lo} to {hi}°C")
+    if "aqi_max" in c:
+        lo, hi = c["aqi_min"], c["aqi_max"]
+        bits.append(f"AQI {lo}" if lo == hi else f"AQI {lo} to {hi}")
     if "wind_kmh" in c:
         bits.append(f"wind {c['wind_kmh']} km/h from the {c['wind_from']}")
     if "rain_chance_pct" in c:
