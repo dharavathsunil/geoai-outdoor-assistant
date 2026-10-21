@@ -247,11 +247,12 @@ def rank_places(cands, rows, activity, profile="none", start=None, end=None, dur
                      distance_km=c["dist_from_center_km"], avoid_hours=avoid_hours)
         if best:
             s, chunk = best
+            has_cons = any(x["cons"] for x in chunk)
             if fallback:
                 s = min(s, 35)
             entry.update(
                 score=round(s),
-                rating="Not recommended" if fallback else label(s),
+                rating="Not recommended" if fallback else ("Good" if (s >= 80 and has_cons) else label(s)),
                 safe_window_found=not fallback,
                 window_start=chunk[0]["dt"].isoformat(),
                 window_end=(chunk[-1]["dt"] + timedelta(hours=1)).isoformat(),

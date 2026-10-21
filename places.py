@@ -2,8 +2,9 @@ import hashlib
 import json
 import math
 import time
+import re
 from pathlib import Path
-
+from concurrent.futures import ThreadPoolExecutor, as_completed
 import requests
 
 CACHE_DIR = Path(".cache")
@@ -65,6 +66,17 @@ def is_downwind(bearing_to_source, wind_from_deg, tolerance=45):
 
 
 # ---------- Overpass with cache ----------
+def _try_overpass(url, query):
+    r = requests.post(url, data={"data": query}, headers=HEADERS, timeout=(6, 35))
+    if r.status_code != 200:
+        raise RuntimeError(f"HTTP {r.status_code}")
+    data = r.json()
+    remark = data.get("remark", "").lower()
+    if "runtime error" in remark or "timed out" in remark:
+        raise RuntimeError("server-side timeout")
+    return data
+
+
 def run_overpass(query: str):
     key = hashlib.md5(query.encode()).hexdigest()
     f = CACHE_DIR / f"{key}.json"
@@ -73,22 +85,20 @@ def run_overpass(query: str):
 
     errors = []
     for attempt in range(2):
-        for url in OVERPASS_URLS:
-            try:
-                r = requests.post(url, data={"data": query}, headers=HEADERS, timeout=(8, 40))
-                if r.status_code != 200:
-                    errors.append(f"{url} -> HTTP {r.status_code}")
+        ex = ThreadPoolExecutor(max_workers=len(OVERPASS_URLS))
+        futs = {ex.submit(_try_overpass, u, query): u for u in OVERPASS_URLS}
+        try:
+            for fut in as_completed(futs):
+                try:
+                    data = fut.result()
+                except Exception as e:
+                    errors.append(f"{futs[fut]} -> {e}")
                     continue
-                data = r.json()
-                remark = data.get("remark", "")
-                if "runtime error" in remark.lower() or "timed out" in remark.lower():
-                    errors.append(f"{url} -> server remark: {remark[:80]}")
-                    continue
-                if data.get("elements"):          # cache only real results
+                if data.get("elements"):
                     f.write_text(json.dumps(data), encoding="utf-8")
                 return data
-            except Exception as e:
-                errors.append(f"{url} -> {type(e).__name__}")
+        finally:
+            ex.shutdown(wait=False, cancel_futures=True)
         time.sleep(2)
 
     if f.exists():
@@ -164,9 +174,10 @@ def get_candidates(lat, lon, activity, radius_m=3000, limit=8):
     for el in data.get("elements", []):
         name = el.get("tags", {}).get("name")
         plat, plon = el_point(el)
-        if not name or plat is None or name.lower() in seen:
+        key = re.sub(r"s$", "", name.lower().strip())
+        if not name or plat is None or key in seen:
             continue
-        seen.add(name.lower())
+        seen.add(key)
         cands.append({
             "name": name, "lat": plat, "lon": plon,
             "osm": f'{el["type"]}/{el["id"]}',

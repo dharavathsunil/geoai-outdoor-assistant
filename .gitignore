@@ -2,3 +2,4 @@
 __pycache__/
 *.gguf
 .cache/
+last_facts.json
