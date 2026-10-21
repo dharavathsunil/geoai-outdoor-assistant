@@ -20,6 +20,7 @@ HEADERS = {"User-Agent": "geoai-hackathon-sunil/0.1 (student project)"}
 
 # Which OSM tags count as a venue for each activity
 ACTIVITY_TAGS = {
+    "walking":     [("leisure", "park"), ("leisure", "garden"), ("leisure", "nature_reserve")],
     "running":     [("leisure", "park"), ("leisure", "track"), ("leisure", "nature_reserve")],
     "cycling":     [("leisure", "park"), ("leisure", "track")],
     "golf":        [("leisure", "golf_course")],
@@ -111,7 +112,7 @@ def bbox_from_radius(lat, lon, r_m):
 
 
 NOMINATIM_TERMS = {
-    "running": "park", "cycling": "park", "golf": "golf course",
+    "walking": "park","running": "park", "cycling": "park", "golf": "golf course",
     "cricket": "cricket ground", "football": "football ground",
     "tennis": "tennis court", "hiking": "viewpoint", "picnic": "park",
     "event": "community hall", "photography": "viewpoint",

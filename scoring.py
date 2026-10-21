@@ -6,6 +6,7 @@ from zoneinfo import ZoneInfo
 # t_ideal / t_max are in apparent temperature (deg C); aqi = (soft, hard) US AQI limits
 # road_w / ind_w = how much traffic / industry upwind matters; exert = exertion level
 ACTIVITIES = {
+    "walking":     dict(t_ideal=(16, 29), t_max=34, rain=30, wind=35, aqi=(100, 200), uv=8, day="prefer", dur=1, exert=0.6, road_w=0.9, ind_w=0.9),
     "running":     dict(t_ideal=(16, 27), t_max=33, rain=30, wind=30, aqi=(100, 200), uv=8,  day="prefer",  dur=1, exert=1.0, road_w=1.0, ind_w=1.0),
     "cycling":     dict(t_ideal=(16, 28), t_max=34, rain=30, wind=25, aqi=(100, 200), uv=8,  day="prefer",  dur=1, exert=1.0, road_w=0.8, ind_w=0.8),
     "golf":        dict(t_ideal=(18, 30), t_max=35, rain=25, wind=30, aqi=(150, 250), uv=9,  day="require", dur=3, exert=0.6, road_w=0.3, ind_w=0.4),

@@ -19,7 +19,7 @@ def geocode(place: str):
     return float(data[0]["lat"]), float(data[0]["lon"]), data[0]["display_name"]
 
 
-def get_weather(lat: float, lon: float, days: int = 3):
+def get_weather(lat: float, lon: float, days: int = 7):
     """Hourly forecast from Open-Meteo."""
     r = requests.get(
         "https://api.open-meteo.com/v1/forecast",
@@ -39,7 +39,7 @@ def get_weather(lat: float, lon: float, days: int = 3):
     return r.json()
 
 
-def get_air_quality(lat: float, lon: float, days: int = 3):
+def get_air_quality(lat: float, lon: float, days: int = 5):
     """Hourly air quality from Open-Meteo."""
     r = requests.get(
         "https://air-quality-api.open-meteo.com/v1/air-quality",
