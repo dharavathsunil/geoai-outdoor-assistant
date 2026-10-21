@@ -174,8 +174,11 @@ def get_candidates(lat, lon, activity, radius_m=3000, limit=8):
     for el in data.get("elements", []):
         name = el.get("tags", {}).get("name")
         plat, plon = el_point(el)
-        key = re.sub(r"s$", "", name.lower().strip())
-        if not name or plat is None or key in seen:
+        key = re.sub(r"[^a-z0-9]", "", name.lower())
+        key = re.sub(r"s$", "", key)
+        if not name or plat is None or any(
+                key == k or (min(len(key), len(k)) >= 8 and (key.startswith(k) or k.startswith(key)))
+                for k in seen):
             continue
         seen.add(key)
         cands.append({
