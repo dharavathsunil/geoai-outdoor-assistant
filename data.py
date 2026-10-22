@@ -2,13 +2,12 @@ import json
 import re
 import threading
 import time
-from pathlib import Path
-import requests
 from datetime import datetime
+from pathlib import Path
 
-HEADERS = {"User-Agent": "geoai-hackathon-dharavathsunil/0.1 (student project; contact: dharavathsunil110@gmail.com)"}
+import requests
 
-
+HEADERS = {"User-Agent": "geoai-hackathon-dharavathsunil/0.1 (student project; contact: YOUR_EMAIL_HERE)"}
 GEO_CACHE = Path(".cache") / "geocode.json"
 _geo_lock = threading.Lock()
 _last_nominatim = [0.0]
@@ -21,21 +20,35 @@ def _load_geo_cache():
         return {}
 
 
-def _nominatim(place):
+def _nom_call(place, india_only):
     with _geo_lock:
         wait = 1.2 - (time.time() - _last_nominatim[0])
         if wait > 0:
             time.sleep(wait)
         _last_nominatim[0] = time.time()
-    r = requests.get(
-        "https://nominatim.openstreetmap.org/search",
-        params={"q": place, "format": "json", "limit": 1, "countrycodes": "in"},
-        headers=HEADERS, timeout=8)
+    params = {"q": place, "format": "json", "limit": 3, "addressdetails": 1}
+    if india_only:
+        params["countrycodes"] = "in"
+    r = requests.get("https://nominatim.openstreetmap.org/search",
+                     params=params, headers=HEADERS, timeout=8)
     r.raise_for_status()
-    d = r.json()
-    if not d:
+    return r.json()
+
+
+def _nominatim(place):
+    ind = _nom_call(place, True)
+    top = ind[0] if ind else None
+    imp = float(top.get("importance", 0) or 0) if top else 0.0
+    if top is None or imp < 0.35:          # weak Indian match: is there a major foreign place?
+        world = _nom_call(place, False)
+        if world:
+            w = world[0]
+            cc = (w.get("address") or {}).get("country_code", "")
+            if cc != "in" and float(w.get("importance", 0) or 0) >= 0.6:
+                return "FOREIGN"
+    if top is None:
         return None
-    return float(d[0]["lat"]), float(d[0]["lon"]), d[0]["display_name"]
+    return float(top["lat"]), float(top["lon"]), top["display_name"]
 
 
 def _photon(place):
@@ -66,12 +79,13 @@ def _open_meteo_geo(place):
 
 
 def geocode(place: str):
-    """Place name -> (lat, lon, display_name). Cached; falls back only when a service errors."""
+    """Place name -> (lat, lon, display_name), "FOREIGN" for places outside India, or None.
+    Cached on disk. Other geocoders are used only when Nominatim errors out."""
     key = re.sub(r"\s+", " ", place.strip().lower())
     cache = _load_geo_cache()
     if key in cache:
         v = cache[key]
-        return v[0], v[1], v[2]
+        return v if isinstance(v, str) else (v[0], v[1], v[2])
 
     result, ok = None, False
     try:
@@ -91,7 +105,7 @@ def geocode(place: str):
 
     if result:
         try:
-            cache[key] = list(result)
+            cache[key] = result if isinstance(result, str) else list(result)
             GEO_CACHE.parent.mkdir(exist_ok=True)
             GEO_CACHE.write_text(json.dumps(cache), encoding="utf-8")
         except Exception:
@@ -137,28 +151,5 @@ def get_air_quality(lat: float, lon: float, days: int = 5):
 
 
 if __name__ == "__main__":
-    place = "Koregaon Park, Pune"
-    geo = geocode(place)
-    if not geo:
-        raise SystemExit("Place not found")
-    lat, lon, name = geo
-    print(f"Place: {name}\nCoordinates: {lat:.4f}, {lon:.4f}\n")
-
-    w = get_weather(lat, lon)
-    aq = get_air_quality(lat, lon)
-
-    print("Sunrise/Sunset today:", w["daily"]["sunrise"][0], "/", w["daily"]["sunset"][0], "\n")
-    print(f"{'Time':<17}{'Temp':>6}{'Feels':>7}{'Rain%':>7}{'Wind':>6}{'Dir':>5}{'UV':>5}{'AQI':>6}{'PM2.5':>7}")
-    now = datetime.now().strftime("%Y-%m-%dT%H:00")
-    times = w["hourly"]["time"]
-    start = times.index(now) if now in times else 0
-    for i in range(start, start + 24):
-        h, a = w["hourly"], aq["hourly"]
-        print(
-            f"{times[i]:<17}"
-            f"{h['temperature_2m'][i]:>6}{h['apparent_temperature'][i]:>7}"
-            f"{h['precipitation_probability'][i]:>7}{h['wind_speed_10m'][i]:>6}"
-            f"{h['wind_direction_10m'][i]:>5}{h['uv_index'][i]:>5}"
-            f"{str(a['us_aqi'][i]):>6}{str(a['pm2_5'][i]):>7}"
-        )
-        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
+    for p in ("Koregaon Park, Pune", "London"):
+        print(p, "->", geocode(p))

@@ -3,16 +3,23 @@ import time
 import traceback
 
 from fastapi import FastAPI, Query
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
 import assistant
 from llm import get_llm
+
+
+class UTF8JSONResponse(JSONResponse):
+    media_type = "application/json; charset=utf-8"
+
 
 app = FastAPI(
     title="GeoAI Outdoor Activity Assistant",
     description="Where and when to head outdoors: live weather, air quality and OpenStreetMap context, "
                 "with a small open language model (Qwen2.5-1.5B-Instruct, Q4 GGUF).",
     version="0.1",
+    default_response_class=UTF8JSONResponse,
 )
 
 _lock = threading.Lock()   # the local model handles one request at a time
@@ -26,7 +33,7 @@ class Ask(BaseModel):
 @app.on_event("startup")
 def warm_up():
     global _ready
-    get_llm()          # load the model once, so users never wait for it
+    get_llm()
     _ready = True
 
 
@@ -72,4 +79,4 @@ def root():
         "usage": "POST /ask with {\"question\": \"...\"}  or  GET /ask?q=...",
         "docs": "/docs",
         "attribution": "Map data © OpenStreetMap contributors; weather and air quality by Open-Meteo",
-    }   
+    }

@@ -218,11 +218,11 @@ def rank_places(cands, rows, activity, profile="none", start=None, end=None, dur
     results = []
     for c in cands:
         ctx = c.get("context", {})
+        dist_pen = min(c["dist_from_center_km"] * 2, 10)
         scored = []
         for r in window_rows:
             s, pros, cons, avoid = score_hour(ctx, r, act, prof)
-            c["_dist_pen"] = min(c["dist_from_center_km"] * 2, 10)
-            scored.append(dict(dt=r["dt"], score=max(0, s - c["_dist_pen"]), pros=pros, cons=cons, avoid=avoid))
+            scored.append(dict(dt=r["dt"], score=max(0, s - dist_pen), pros=pros, cons=cons, avoid=avoid))
 
         def best_window(allow_avoid):
             best = None
@@ -248,12 +248,13 @@ def rank_places(cands, rows, activity, profile="none", start=None, end=None, dur
         if best:
             s, chunk = best
             has_cons = any(x["cons"] for x in chunk)
+            weak = fallback or s < 40
             if fallback:
                 s = min(s, 35)
             entry.update(
                 score=round(s),
-                rating="Not recommended" if fallback else ("Good" if (s >= 80 and has_cons) else label(s)),
-                safe_window_found=not fallback,
+                rating="Not recommended" if weak else ("Good" if (s >= 80 and has_cons) else label(s)),
+                safe_window_found=not weak,
                 window_start=chunk[0]["dt"].isoformat(),
                 window_end=(chunk[-1]["dt"] + timedelta(hours=1)).isoformat(),
                 pros=_uniq([p for x in chunk for p in x["pros"]]),

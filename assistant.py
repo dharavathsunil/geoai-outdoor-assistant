@@ -1,6 +1,7 @@
 import json
 import time
 from datetime import datetime, timedelta
+from difflib import SequenceMatcher
 from zoneinfo import ZoneInfo
 
 from data import geocode, get_weather, get_air_quality
@@ -130,6 +131,9 @@ def run(question):
     except Exception:
         return done("The map lookup service is busy right now. Please try again in a minute.")
     lap("geocode")
+    if geo == "FOREIGN":
+        return done("That looks like a place outside India, and I currently cover India only. "
+                    "Could you give an Indian city or area?", True)
     if not geo:
         return done(f"I couldn't find '{q['place']}' on the map. Could you give a nearby landmark or the city name?", True)
     lat, lon, display = geo
@@ -146,12 +150,14 @@ def run(question):
     end = datetime.fromisoformat(when["end"])
     if start > rows[-1]["dt"]:
         return done("I can only look about a week ahead. Could you pick a nearer day?", True)
+
     hr0 = when["hour_range"]
     remaining = [r for r in rows if start <= r["dt"] < end
                  and (not hr0 or hr0[0] <= r["dt"].hour < hr0[1])]
     if not remaining:
         return done(f"That time window has already passed (it is {datetime.now(IST):%H:%M} now). "
                     "Want me to check tomorrow instead?", True)
+
     try:
         cands, used_r = [], q["radius_km"]
         for r in (q["radius_km"], q["radius_km"] * 2, q["radius_km"] * 4):
@@ -200,11 +206,18 @@ def run(question):
     avoid_all = [a for a in avoid_all if 5 <= int(a.split()[1][:2]) <= 21]
     lap("score")
 
+    resolved = ", ".join(p.strip() for p in display.split(",")[:3] if p.strip())
+    sim = SequenceMatcher(None, q["place"].split(",")[0].strip().lower(),
+                          display.split(",")[0].strip().lower()).ratio()
+
     facts = {
         "activity": act,
         "profile": prof,
         "area": q["place"],
-            "resolved_area": ", ".join(display.split(",")[:3]).strip(),
+        "resolved_area": resolved,
+        "place_note": "" if sim >= 0.7 else (
+            f"I read '{q['place']}' as {resolved}. If that is not what you meant, "
+            "please give a nearby landmark or the city name."),
         "search_radius_km": used_r,
         "when_asked": when["label"],
         "recommendation": dict(

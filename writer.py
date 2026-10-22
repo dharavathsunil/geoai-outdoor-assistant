@@ -14,7 +14,7 @@ Rules:
 - If safe_window_found is true, the answer is positive: say it is a good time to go. Never say "not recommended". Mention at most one caution, softened, as something to keep in mind.
 - If safe_window_found is false, begin with "Not recommended", give the main reason, and say this is only the least bad option.
 - If profile is given (for example asthma), mention it once.
-- Do not copy the cautions word for word. No lists, no headings, no advice about what to carry.
+- Do not copy the cautions word for word. Comment only on things listed in positives, cautions or conditions, and never call wind, UV or rain "moderate", "strong" or "high" unless a caution says so. No lists, no headings, no advice about what to carry.
 Example of the style (do not reuse its words):
 FACTS: {"activity":"running","place":"Lake Park","day":"Friday","time":"06:00 to 07:00","rating":"Good","safe_window_found":true,"positives":["comfortable temperature"],"cautions":["AQI 105 is above the comfortable limit (100)"]}
 ANSWER: Lake Park is a good choice for a run on Friday between 06:00 and 07:00, when the temperature is comfortable. Air quality is a little above ideal (AQI 105), so keep the pace easy."""
