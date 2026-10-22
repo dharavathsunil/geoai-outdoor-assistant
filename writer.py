@@ -90,7 +90,12 @@ def render(f, narrative):
         head = f"**Recommendation:** {r['place']}, {r['window']} ({r['rating']}, {r['score']}/100){_who(f)}."
     else:
         head = f"**Recommendation:** Not recommended{_who(f)}. Least bad option: {r['place']}, {r['window']}."
-    parts = [head, narrative]
+
+    area = f.get("resolved_area") or f["area"]
+    parts = [head, f"*Area searched: {area}, within {f['search_radius_km']:g} km.*"]
+    if f.get("place_note"):
+        parts.append(f"*{f['place_note']}*")
+    parts.append(narrative)
 
     bits = []
     if "feels_like_min_c" in c:

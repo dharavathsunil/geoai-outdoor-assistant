@@ -1,5 +1,6 @@
 import threading
 import time
+import traceback
 
 from fastapi import FastAPI, Query
 from pydantic import BaseModel
@@ -42,6 +43,7 @@ def _answer(question: str):
         try:
             return assistant.run(question)
         except Exception as e:
+            traceback.print_exc()
             return {"question": question, "needs_input": False,
                     "answer": "Sorry, something went wrong while preparing your answer. Please try again.",
                     "error": type(e).__name__, "seconds": round(time.time() - t0, 1),

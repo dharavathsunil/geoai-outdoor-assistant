@@ -146,7 +146,12 @@ def run(question):
     end = datetime.fromisoformat(when["end"])
     if start > rows[-1]["dt"]:
         return done("I can only look about a week ahead. Could you pick a nearer day?", True)
-
+    hr0 = when["hour_range"]
+    remaining = [r for r in rows if start <= r["dt"] < end
+                 and (not hr0 or hr0[0] <= r["dt"].hour < hr0[1])]
+    if not remaining:
+        return done(f"That time window has already passed (it is {datetime.now(IST):%H:%M} now). "
+                    "Want me to check tomorrow instead?", True)
     try:
         cands, used_r = [], q["radius_km"]
         for r in (q["radius_km"], q["radius_km"] * 2, q["radius_km"] * 4):
@@ -199,6 +204,7 @@ def run(question):
         "activity": act,
         "profile": prof,
         "area": q["place"],
+            "resolved_area": ", ".join(display.split(",")[:3]).strip(),
         "search_radius_km": used_r,
         "when_asked": when["label"],
         "recommendation": dict(

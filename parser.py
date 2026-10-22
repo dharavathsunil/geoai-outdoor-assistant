@@ -94,9 +94,9 @@ def resolve_when(question, now):
                 off = 7
             found.append(today + timedelta(days=off))
 
-    if "day after tomorrow" in text:
+    if re.search(r"day after (tomorrow|tomorow|tommorow|tmrw)", text):
         d0 = d1 = today + timedelta(days=2)
-    elif "tomorrow" in text:
+    elif re.search(r"\b(tomorrow|tomorow|tommorow|tommorrow|tmrw|tmr)\b", text):
         d0 = d1 = today + timedelta(days=1)
     elif re.search(r"next (two|2) days", text):
         d0, d1 = today, today + timedelta(days=1)
@@ -108,6 +108,9 @@ def resolve_when(question, now):
         else:
             d0 = today + timedelta(days=5 - wd)
             d1 = d0 + timedelta(days=1)
+    elif "next week" in text:
+        d0 = today + timedelta(days=7 - wd)
+        d1 = d0 + timedelta(days=6)
     elif found:
         d0, d1 = min(found), max(found)
     elif re.search(r"\b(today|tonight|this (morning|afternoon|evening))\b", text):
@@ -181,7 +184,8 @@ def parse_query(question):
     radius = min(max(radius, 1.0), 40.0) if radius else 3.0
 
     when = resolve_when(question, now)
-
+    if re.search(r"\bnext (month|year)\b|\bin (\d+|a|two|three|four) (weeks?|months?)\b", q):
+        when["too_far"] = True
     status, clarify = "ok", None
     if activity is None:
         status = "unsupported"
@@ -190,6 +194,9 @@ def parse_query(question):
     elif not place:
         status = "need_place"
         clarify = "Which area or city should I look at? A neighbourhood or landmark name works best."
+    elif when.get("too_far"):
+        status = "need_time"
+        clarify = "I can only forecast about a week ahead. Which day in the next few days should I check?"
     elif when["past"]:
         status = "need_time"
         clarify = "That time has already passed. Which upcoming day or time did you mean?"

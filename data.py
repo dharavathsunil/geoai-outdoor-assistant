@@ -1,22 +1,102 @@
+import json
+import re
+import threading
+import time
+from pathlib import Path
 import requests
 from datetime import datetime
 
-HEADERS = {"User-Agent": "geoai-hackathon-sunil/0.1 (student project)"}
+HEADERS = {"User-Agent": "geoai-hackathon-dharavathsunil/0.1 (student project; contact: dharavathsunil110@gmail.com)"}
 
 
-def geocode(place: str):
-    """Place name -> (lat, lon, display_name) using Nominatim."""
+GEO_CACHE = Path(".cache") / "geocode.json"
+_geo_lock = threading.Lock()
+_last_nominatim = [0.0]
+
+
+def _load_geo_cache():
+    try:
+        return json.loads(GEO_CACHE.read_text(encoding="utf-8"))
+    except Exception:
+        return {}
+
+
+def _nominatim(place):
+    with _geo_lock:
+        wait = 1.2 - (time.time() - _last_nominatim[0])
+        if wait > 0:
+            time.sleep(wait)
+        _last_nominatim[0] = time.time()
     r = requests.get(
         "https://nominatim.openstreetmap.org/search",
         params={"q": place, "format": "json", "limit": 1, "countrycodes": "in"},
-        headers=HEADERS,
-        timeout=20,
-    )
+        headers=HEADERS, timeout=8)
     r.raise_for_status()
-    data = r.json()
-    if not data:
+    d = r.json()
+    if not d:
         return None
-    return float(data[0]["lat"]), float(data[0]["lon"]), data[0]["display_name"]
+    return float(d[0]["lat"]), float(d[0]["lon"]), d[0]["display_name"]
+
+
+def _photon(place):
+    r = requests.get("https://photon.komoot.io/api/",
+                     params={"q": place, "limit": 5, "lang": "en"}, headers=HEADERS, timeout=8)
+    r.raise_for_status()
+    for f in r.json().get("features", []):
+        p = f.get("properties", {})
+        if str(p.get("countrycode", "")).upper() != "IN":
+            continue
+        lon, lat = f["geometry"]["coordinates"]
+        name = ", ".join(x for x in [p.get("name"), p.get("district") or p.get("locality"),
+                                     p.get("city"), p.get("state")] if x)
+        return lat, lon, name
+    return None
+
+
+def _open_meteo_geo(place):
+    r = requests.get("https://geocoding-api.open-meteo.com/v1/search",
+                     params={"name": place.split(",")[0], "count": 10, "language": "en", "format": "json"},
+                     timeout=8)
+    r.raise_for_status()
+    for x in r.json().get("results") or []:
+        if x.get("country_code") == "IN":
+            name = ", ".join(v for v in [x.get("name"), x.get("admin2"), x.get("admin1")] if v)
+            return x["latitude"], x["longitude"], name
+    return None
+
+
+def geocode(place: str):
+    """Place name -> (lat, lon, display_name). Cached; falls back only when a service errors."""
+    key = re.sub(r"\s+", " ", place.strip().lower())
+    cache = _load_geo_cache()
+    if key in cache:
+        v = cache[key]
+        return v[0], v[1], v[2]
+
+    result, ok = None, False
+    try:
+        result, ok = _nominatim(place), True
+    except Exception:
+        pass
+    if not ok:
+        for fn in (_photon, _open_meteo_geo):
+            try:
+                result, ok = fn(place), True
+            except Exception:
+                continue
+            if result:
+                break
+    if not ok:
+        raise RuntimeError("all geocoders failed")
+
+    if result:
+        try:
+            cache[key] = list(result)
+            GEO_CACHE.parent.mkdir(exist_ok=True)
+            GEO_CACHE.write_text(json.dumps(cache), encoding="utf-8")
+        except Exception:
+            pass
+    return result
 
 
 def get_weather(lat: float, lon: float, days: int = 7):

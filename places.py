@@ -9,7 +9,7 @@ import requests
 
 CACHE_DIR = Path(".cache")
 CACHE_DIR.mkdir(exist_ok=True)
-CACHE_TTL = 6 * 3600  # seconds
+CACHE_TTL = 7 * 24 * 3600  # seconds
 
 OVERPASS_URLS = [
     "https://overpass-api.de/api/interpreter",

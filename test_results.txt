@@ -1,0 +1,75 @@
+Where can I run tomorrow evening near Koregaon Park?
+   needs_input=False | writer=slm  | 11.3 s
+   **Recommendation:** Osho Teerth Park, Fri 23 Oct, 16:00-17:00 (Good, 84/100).  Osho Teerth Park is a good choice for a run on Friday from 16:00 to 17:00. The water body 689 meters away helps with heat, and there are 6 green areas 
+
+runing near puna tomorow morning
+   needs_input=False | writer=slm  | 12.4 s
+   **Recommendation:** V. D. Vartak Udyan, Thu 22 Oct, 10:00-11:00 (Good, 93/100).  V. D. Vartak Udyan is a good place for a run on Thursday from 10:00 to 11:00. The AQI is at an acceptable level at 98, and the water body nearby help
+
+Best time this weekend for a kids' cricket match within 15 km of Whitefield?
+   needs_input=False | writer=slm  | 12.0 s
+   **Recommendation:** Willow Sports Cricket academy, Sat 24 Oct, 07:00-09:00 (Good, 96/100) for children.  Willow Sports Cricket Academy is a good option for a cricket match on Saturday between 07:00 and 09:00. The temperature feels
+
+I have mild asthma, where's good for a morning walk near Powai in the next two days?
+   needs_input=False | writer=slm  | 11.3 s
+   **Recommendation:** Not recommended for someone with asthma. Least bad option: Hiranandani Gardens, Fri 23 Oct, 07:00-08:00.  Hiranandani Gardens is not recommended for walking on Friday between 07:00 and 08:00 due to warm weather
+
+Is it okay to cycle to work at 8 AM?
+   needs_input=True | writer=-  | 3.2 s
+   Which area or city should I look at? A neighbourhood or landmark name works best.
+
+Planning an outdoor birthday party on Sunday afternoon in Pune, what should I keep in mind?
+   needs_input=False | writer=slm  | 22.3 s
+   **Recommendation:** Vijaya Kailas Tikone Udyan, Sun 25 Oct, 13:00-16:00 (Good, 97/100).  Vijaya Kailas Tikone Udyan is a good place for an event on Sunday between 13:00 and 16:00. The AQI is acceptable at 116, and the water body n
+
+Good place and time for golf on Saturday within 40 km of Andheri?
+   needs_input=False | writer=slm  | 21.6 s
+   **Recommendation:** Bombay Presidency Golf Club(BPGC), Sat 24 Oct, 07:00-10:00 (Good, 80/100).  Bombay Presidency Golf Club(BPGC) is a good choice for a golfing session on Saturday between 07:00 and 10:00. The water body 303 meter
+
+Where can I take sunset photos this evening around Bandra?
+   needs_input=False | writer=slm  | 22.1 s
+   **Recommendation:** Almeida Park, Thu 22 Oct, 17:00-18:00 (Good, 80/100).  Almeida Park is a good place for photography between 17:00 and 18:00 on Thursday. The golden-hour light is perfect, and the water body 667 meters away help
+
+Is Saturday or Sunday better for a hike near Lonavala?
+   needs_input=False | writer=slm  | 20.3 s
+   **Recommendation:** Duke's Nose, Sun 25 Oct, 07:00-10:00 (Good, 89/100).  Duke's Nose is a good option for a hike on Sunday between 07:00 and 10:00. The temperature feels like 24.2°C, which is comfortable. The AQI is at 125, which
+
+When is it safe for my parents to walk outdoors tomorrow in Bengaluru?
+   needs_input=False | writer=slm  | 25.8 s
+   **Recommendation:** Rose Garden, Fri 23 Oct, 06:00-07:00 (Good, 97/100) for seniors.  Rose Garden is a good place for a walk on Friday between 06:00 and 07:00, with a comfortable temperature of 23.6°C (feels like) and an acceptabl
+
+Outdoor tennis after work today near Hinjewadi, any good spots?
+   needs_input=False | writer=slm  | 17.2 s
+   **Recommendation:** Mhalunge Balewadi Tennis Complex, Thu 22 Oct, 16:00-17:00 (Good, 88/100).  Mhalunge Balewadi Tennis Complex is a good option for tennis on Thursday from 16:00 to 17:00. The air quality is acceptable with an AQI
+
+I'm 7 months pregnant, can I walk in Indiranagar Bengaluru tomorrow morning?
+   needs_input=False | writer=slm  | 27.3 s
+   **Recommendation:** Swami Vivekananda Park, Fri 23 Oct, 06:00-07:00 (Good, 99/100) for pregnancy.  Swami Vivekananda Park is a good choice for a walk on Friday between 06:00 and 07:00, with a comfortable temperature of 23.5°C and 
+
+football with friends near Salt Lake Kolkata friday evening
+   needs_input=False | writer=slm  | 23.6 s
+   **Recommendation:** National Institute of Homoeopathy Football Ground, Fri 23 Oct, 19:00-20:00 (Poor, 0/100).  The football match at the National Institute of Homoeopathy Football Ground on Friday from 19:00 to 20:00 is rated as p
+
+Where can I surf near Goa tomorrow?
+   needs_input=True | writer=-  | 4.4 s
+   I can advise on running, walking, cycling, golf, cricket, football, tennis, hiking, picnics, outdoor events and photography. Which of these are you planning?
+
+What is the capital of France?
+   needs_input=True | writer=-  | 2.3 s
+   I can advise on running, walking, cycling, golf, cricket, football, tennis, hiking, picnics, outdoor events and photography. Which of these are you planning?
+
+Run near Xyzzyville tomorrow morning
+   needs_input=True | writer=-  | 3.4 s
+   I couldn't find 'Xyzzyville' on the map. Could you give a nearby landmark or the city name?
+
+Picnic near Mysuru next month
+   needs_input=False | writer=slm  | 22.7 s
+   **Recommendation:** Tataiah Park, Fri 23 Oct, 07:00-09:00 (Good, 99/100).  Tataiah Park is a good place for a picnic on Friday from 07:00 to 09:00. The temperature feels like 24.6°C, which is comfortable. The air quality is accept
+
+Where can I run near Koregaon Park?
+   needs_input=False | writer=slm  | 14.6 s
+   **Recommendation:** Osho Teerth Park, Fri 23 Oct, 06:00-07:00 (Great, 100/100).  Osho Teerth Park is a great choice for a run on Friday between 06:00 and 07:00. The temperature feels like 23.2°C, which is comfortable. The Air Qual
+
+cycling in London tomorrow
+   needs_input=False | writer=slm  | 24.7 s
+   **Recommendation:** Tukaimata Jogging Track Garden, Fri 23 Oct, 06:00-07:00 (Great, 98/100).  Tukaimata Jogging Track Garden is a great option for cycling on Friday between 06:00 and 07:00. The temperature feels like 23.5°C, and t
