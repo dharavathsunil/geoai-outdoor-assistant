@@ -2,7 +2,9 @@ import os
 from huggingface_hub import hf_hub_download
 from llama_cpp import Llama
 
-REPO = "Qwen/Qwen2.5-1.5B-Instruct-GGUF"
+# The GGUF file is served from our own Hugging Face model repo
+# (an unmodified copy of Qwen's official Q4_K_M quantisation of Qwen2.5-1.5B-Instruct).
+REPO = "dharavathsunil/geoai-outdoor-slm"
 FILE = "qwen2.5-1.5b-instruct-q4_k_m.gguf"
 
 _llm = None
