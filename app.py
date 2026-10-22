@@ -3,9 +3,9 @@ import time
 import traceback
 
 from fastapi import FastAPI, Query
-from fastapi.responses import JSONResponse
+from fastapi.responses import HTMLResponse, JSONResponse
 from pydantic import BaseModel
-
+from pathlib import Path
 import assistant
 from llm import get_llm
 
@@ -80,3 +80,6 @@ def root():
         "docs": "/docs",
         "attribution": "Map data © OpenStreetMap contributors; weather and air quality by Open-Meteo",
     }
+@app.get("/ui", response_class=HTMLResponse)
+def ui():
+    return Path(__file__).with_name("ui.html").read_text(encoding="utf-8")

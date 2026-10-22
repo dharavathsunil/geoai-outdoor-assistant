@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GeoAI Outdoor Assistant</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<style>
+  body { font-family: system-ui, Arial, sans-serif; margin: 0; background: #f4f6f8; color: #1d2733; }
+  header { background: #0f4c5c; color: #fff; padding: 14px 20px; }
+  header h1 { margin: 0; font-size: 20px; }
+  header p { margin: 4px 0 0; font-size: 13px; opacity: .85; }
+  main { max-width: 1100px; margin: 0 auto; padding: 16px; }
+  .row { display: flex; gap: 8px; }
+  input { flex: 1; padding: 12px; font-size: 16px; border: 1px solid #b8c2cc; border-radius: 8px; }
+  button { padding: 12px 20px; font-size: 16px; border: 0; border-radius: 8px; background: #0f4c5c; color: #fff; cursor: pointer; }
+  button:disabled { background: #7a9aa3; cursor: wait; }
+  .chips { margin: 10px 0; display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip { font-size: 13px; padding: 5px 10px; border-radius: 14px; background: #e1eaee; cursor: pointer; border: 0; color: #1d2733; }
+  #status { margin: 8px 0; font-size: 14px; color: #52606d; min-height: 18px; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 800px) { .grid { grid-template-columns: 1fr; } }
+  .card { background: #fff; border-radius: 10px; padding: 14px 18px; box-shadow: 0 1px 3px rgba(0,0,0,.12); }
+  #map { height: 420px; border-radius: 10px; }
+  #answer p { margin: 8px 0; line-height: 1.45; }
+  #answer ul { margin: 6px 0 6px 18px; padding: 0; }
+  .pin { background: #0f4c5c; color: #fff; border-radius: 50%; width: 28px; height: 28px; line-height: 28px; text-align: center; font-weight: 700; border: 2px solid #fff; box-shadow: 0 1px 4px rgba(0,0,0,.4); }
+  footer { font-size: 12px; color: #52606d; margin-top: 14px; }
+  #meta { font-size: 12px; color: #52606d; margin-top: 10px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>GeoAI Outdoor Activity Assistant</h1>
+  <p>Where and when to go outdoors: live weather, air quality and OpenStreetMap context, with a small open language model.</p>
+</header>
+<main>
+  <div class="row">
+    <input id="q" placeholder="e.g. Where can I run tomorrow evening near Koregaon Park?" autofocus>
+    <button id="go">Ask</button>
+  </div>
+  <div class="chips" id="chips"></div>
+  <div id="status"></div>
+  <div class="grid" id="grid" style="display:none">
+    <div class="card"><div id="answer"></div><div id="meta"></div></div>
+    <div><div id="map"></div></div>
+  </div>
+  <footer>
+    Map data &copy; OpenStreetMap contributors. Weather and air quality: Open-Meteo.
+    Language model: Qwen2.5-1.5B-Instruct (open weights). Not medical advice.
+  </footer>
+</main>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+const EXAMPLES = [
+  "Where can I run tomorrow evening near Koregaon Park?",
+  "I have mild asthma, where's good for a morning walk near Powai in the next two days?",
+  "Is Saturday or Sunday better for a hike near Lonavala?",
+  "Good place and time for golf on Saturday within 40 km of Andheri?",
+  "Planning an outdoor birthday party on Sunday afternoon in Pune, what should I keep in mind?"
+];
+let map = null, layer = null;
+
+function esc(s) { return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
+
+function md(text) {
+  let html = "", inList = false;
+  for (const raw of esc(text).split("\n")) {
+    const l = raw.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>").replace(/\*(.+?)\*/g, "<em>$1</em>");
+    if (raw.startsWith("- ")) {
+      if (!inList) { html += "<ul>"; inList = true; }
+      html += "<li>" + l.slice(2) + "</li>";
+    } else {
+      if (inList) { html += "</ul>"; inList = false; }
+      if (l.trim()) html += "<p>" + l + "</p>";
+    }
+  }
+  if (inList) html += "</ul>";
+  return html;
+}
+
+function showMap(points) {
+  if (!points || !points.length) { $("map").style.display = "none"; return; }
+  $("map").style.display = "block";
+  if (!map) {
+    map = L.map("map");
+    L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+      { maxZoom: 19, attribution: "&copy; OpenStreetMap contributors" }).addTo(map);
+    layer = L.layerGroup().addTo(map);
+  }
+  layer.clearLayers();
+  const bounds = [];
+  for (const p of points) {
+    const icon = L.divIcon({ className: "", html: '<div class="pin">' + p.rank + "</div>", iconSize: [28, 28], iconAnchor: [14, 14] });
+    L.marker([p.lat, p.lon], { icon }).addTo(layer).bindPopup("#" + p.rank + " " + esc(p.name));
+    bounds.push([p.lat, p.lon]);
+  }
+  if (bounds.length === 1) map.setView(bounds[0], 14); else map.fitBounds(bounds, { padding: [40, 40] });
+  setTimeout(() => map.invalidateSize(), 100);
+}
+
+async function ask(q) {
+  q = q.trim();
+  if (!q) return;
+  $("go").disabled = true;
+  $("status").textContent = "Fetching live data and thinking... (usually 10-25 s)";
+  try {
+    const r = await fetch("/ask", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ question: q }) });
+    const d = await r.json();
+    $("grid").style.display = "grid";
+    $("answer").innerHTML = md(d.answer || "No answer returned.");
+    const w = d.writer ? (" | summary by " + (d.writer.mode === "slm" ? "the language model (verified)" : "template (model output failed the check)")) : "";
+    $("meta").textContent = "Answered in " + d.seconds + " s" + w;
+    showMap(d.map);
+    $("status").textContent = "";
+  } catch (e) {
+    $("status").textContent = "Could not reach the assistant. Please try again.";
+  }
+  $("go").disabled = false;
+}
+
+for (const ex of EXAMPLES) {
+  const b = document.createElement("button");
+  b.className = "chip"; b.textContent = ex;
+  b.onclick = () => { $("q").value = ex; ask(ex); };
+  $("chips").appendChild(b);
+}
+$("go").onclick = () => ask($("q").value);
+$("q").addEventListener("keydown", e => { if (e.key === "Enter") ask($("q").value); });
+</script>
+</body>
+</html>
