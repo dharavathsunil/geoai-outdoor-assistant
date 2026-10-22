@@ -1,0 +1,6 @@
+.venv
+.cache
+__pycache__
+*.gguf
+last_facts.json
+.git
