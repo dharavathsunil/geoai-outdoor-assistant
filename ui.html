@@ -3,55 +3,111 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#183d32">
 <title>GeoAI Outdoor Assistant</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <style>
-  body { font-family: system-ui, Arial, sans-serif; margin: 0; background: #f4f6f8; color: #1d2733; }
-  header { background: #0f4c5c; color: #fff; padding: 14px 20px; }
-  header h1 { margin: 0; font-size: 20px; }
-  header p { margin: 4px 0 0; font-size: 13px; opacity: .85; }
-  main { max-width: 1100px; margin: 0 auto; padding: 16px; }
-  .row { display: flex; gap: 8px; }
-  input { flex: 1; padding: 12px; font-size: 16px; border: 1px solid #b8c2cc; border-radius: 8px; }
-  button { padding: 12px 20px; font-size: 16px; border: 0; border-radius: 8px; background: #0f4c5c; color: #fff; cursor: pointer; }
-  button:disabled { background: #7a9aa3; cursor: wait; }
-  .chips { margin: 10px 0; display: flex; flex-wrap: wrap; gap: 6px; }
-  .chip { font-size: 13px; padding: 5px 10px; border-radius: 14px; background: #e1eaee; cursor: pointer; border: 0; color: #1d2733; }
-  #status { margin: 8px 0; font-size: 14px; color: #52606d; min-height: 18px; }
-  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-  @media (max-width: 800px) { .grid { grid-template-columns: 1fr; } }
-  .card { background: #fff; border-radius: 10px; padding: 14px 18px; box-shadow: 0 1px 3px rgba(0,0,0,.12); }
-  #map { height: 420px; border-radius: 10px; }
-  #answer p { margin: 8px 0; line-height: 1.45; }
-  #answer ul { margin: 6px 0 6px 18px; padding: 0; }
-  .pin { background: #0f4c5c; color: #fff; border-radius: 50%; width: 28px; height: 28px; line-height: 28px; text-align: center; font-weight: 700; border: 2px solid #fff; box-shadow: 0 1px 4px rgba(0,0,0,.4); }
-  footer { font-size: 12px; color: #52606d; margin-top: 14px; }
-  #meta { font-size: 12px; color: #52606d; margin-top: 10px; }
+  :root { color-scheme: light; --forest:#183d32; --forest-deep:#102d25; --sage:#e8eee7; --sage-dark:#cdd9cb; --paper:#fbfaf6; --white:#fff; --ink:#202b25; --muted:#66736b; --line:#e4e8e1; --gold:#b78842; --danger:#9b4439; --shadow:0 10px 35px rgba(31,54,42,.07); }
+  * { box-sizing:border-box; }
+  body { margin:0; color:var(--ink); background:var(--paper); font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif; font-size:15px; line-height:1.55; }
+  header { color:#f9faf6; background:var(--forest); position:relative; overflow:hidden; }
+  header:after { content:""; position:absolute; width:360px; height:360px; border:1px solid rgba(255,255,255,.09); border-radius:50%; right:-92px; top:-220px; box-shadow:0 0 0 36px rgba(255,255,255,.025),0 0 0 76px rgba(255,255,255,.02); pointer-events:none; }
+  .head-inner, main { width:min(1120px,calc(100% - 48px)); margin:auto; }
+  .head-inner { padding:25px 0 28px; position:relative; z-index:1; }
+  .eyebrow { margin:0 0 8px; color:#c5d5c6; font-size:11px; font-weight:750; letter-spacing:.16em; text-transform:uppercase; }
+  h1 { margin:0; font-family:Georgia,"Times New Roman",serif; font-size:clamp(28px,4vw,40px); font-weight:500; letter-spacing:-.035em; line-height:1.12; }
+  header p { max-width:660px; margin:10px 0 0; color:#d8e2d9; font-size:14px; }
+  main { padding:28px 0 36px; }
+  .search-panel { padding:20px; border:1px solid var(--line); border-radius:16px; background:var(--white); box-shadow:var(--shadow); }
+  .search-label { display:block; margin-bottom:9px; color:var(--forest); font-size:13px; font-weight:750; }
+  .search-row { display:flex; gap:10px; }
+  input { min-width:0; flex:1; padding:14px 16px; border:1px solid #cbd4ca; border-radius:10px; outline:none; color:var(--ink); background:#fdfdfb; font:inherit; transition:border-color .18s,box-shadow .18s; }
+  input:focus { border-color:#5a8069; box-shadow:0 0 0 3px rgba(82,124,96,.15); }
+  button { font:inherit; }
+  #go { min-width:112px; padding:0 21px; border:0; border-radius:10px; color:#fff; background:var(--forest); font-weight:700; cursor:pointer; transition:background .18s,transform .18s; }
+  #go:hover:not(:disabled) { background:var(--forest-deep); transform:translateY(-1px); }
+  #go:disabled { opacity:.65; cursor:wait; }
+  .examples-label { margin:17px 0 8px; color:var(--muted); font-size:11px; font-weight:750; letter-spacing:.1em; text-transform:uppercase; }
+  .chips { display:flex; flex-wrap:wrap; gap:7px; }
+  .chip { padding:7px 11px; border:1px solid #dce4db; border-radius:999px; color:#405348; background:#f3f6f0; font-size:12px; text-align:left; cursor:pointer; transition:background .15s,border-color .15s; }
+  .chip:hover { border-color:#9fb39f; background:var(--sage); }
+  #status { min-height:22px; margin:14px 2px 0; color:var(--muted); font-size:13px; }
+  #status[data-state="error"] { color:var(--danger); }
+  #status[data-state="loading"]:before { content:""; display:inline-block; width:12px; height:12px; margin:0 8px -2px 0; border:2px solid #cad5ca; border-top-color:var(--forest); border-radius:50%; animation:spin .8s linear infinite; }
+  @keyframes spin { to { transform:rotate(360deg); } }
+  #grid { display:grid; grid-template-columns:minmax(0,1.08fr) minmax(0,.92fr); align-items:start; gap:18px; margin-top:8px; }
+  #grid[hidden], [hidden] { display:none !important; }
+  .stack { display:grid; gap:16px; min-width:0; }
+  .card { min-width:0; padding:20px; border:1px solid var(--line); border-radius:14px; background:var(--white); box-shadow:0 4px 20px rgba(31,54,42,.045); }
+  .section-kicker { margin:0 0 12px; color:#77847a; font-size:10px; font-weight:800; letter-spacing:.14em; text-transform:uppercase; }
+  #answer { color:#354239; }
+  #answer p { margin:0 0 11px; line-height:1.7; }
+  #answer p:last-child { margin-bottom:0; }
+  #answer ul { margin:4px 0 12px; padding-left:20px; }
+  #answer li { margin:4px 0; }
+  #answer strong { color:var(--forest); }
+  #meta { margin-top:15px; padding-top:12px; border-top:1px solid var(--line); color:#78837b; font-size:11px; }
+  .recommendation { border-top:3px solid var(--forest); }
+  .rec-top { display:flex; justify-content:space-between; align-items:flex-start; gap:12px; }
+  .rec-place { margin:0; color:var(--forest); font-family:Georgia,"Times New Roman",serif; font-size:24px; font-weight:500; line-height:1.2; }
+  .rating { flex:0 0 auto; padding:5px 9px; border-radius:999px; color:#395846; background:var(--sage); font-size:11px; font-weight:750; }
+  .rec-time { margin:7px 0 0; color:var(--muted); font-size:13px; }
+  .rec-details { display:flex; flex-wrap:wrap; gap:8px 16px; margin-top:15px; padding-top:13px; border-top:1px solid var(--line); color:#506057; font-size:12px; }
+  .rec-details span { display:inline-flex; align-items:center; gap:6px; }
+  .rec-details b { color:var(--forest); font-size:13px; }
+  .metric-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:9px; }
+  .metric { min-width:0; padding:11px 12px; border-radius:10px; background:#f2f5ef; }
+  .metric-label { display:block; color:#748077; font-size:10px; font-weight:750; letter-spacing:.05em; text-transform:uppercase; }
+  .metric-value { display:block; overflow-wrap:anywhere; margin-top:3px; color:#263d30; font-size:17px; font-weight:700; }
+  .metric-unit { color:#647169; font-size:10px; font-weight:500; }
+  .subsection { margin:16px 0 7px; color:#77847a; font-size:10px; font-weight:800; letter-spacing:.12em; text-transform:uppercase; }
+  .tag-list { display:flex; flex-wrap:wrap; gap:6px; }
+  .tag { padding:5px 9px; border:1px solid #e4e9e0; border-radius:999px; color:#526158; background:#fbfcf9; font-size:11px; }
+  .alternatives { display:grid; gap:8px; }
+  .alternative { display:flex; justify-content:space-between; align-items:flex-start; gap:10px; padding:11px 12px; border:1px solid var(--line); border-radius:10px; background:#fdfdfa; }
+  .alternative-name { color:#34483b; font-size:13px; font-weight:700; }
+  .alternative-meta { color:#748077; font-size:11px; text-align:right; }
+  #map { height:390px; overflow:hidden; border:1px solid var(--line); border-radius:14px; background:#edf1ea; }
+  .map-caption { margin:8px 2px 0; color:#7a857c; font-size:10px; }
+  .pin { display:flex; align-items:center; justify-content:center; width:30px; height:30px; border:2px solid white; border-radius:50%; color:white; background:var(--forest); box-shadow:0 2px 7px rgba(0,0,0,.3); font-size:12px; font-weight:800; }
+  footer { margin-top:23px; padding-top:14px; border-top:1px solid var(--line); color:#78837b; font-size:11px; }
+  @media (max-width:820px) { #grid { grid-template-columns:1fr; } #map { height:340px; } }
+  @media (max-width:560px) { .head-inner,main { width:min(100% - 28px,1120px); } .head-inner { padding:21px 0 23px; } main { padding-top:18px; } .search-panel,.card { padding:15px; } .search-row { flex-direction:column; } #go { min-height:46px; } .metric-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } #map { height:300px; } .rec-place { font-size:21px; } }
 </style>
 </head>
 <body>
-<header>
-  <h1>GeoAI Outdoor Activity Assistant</h1>
-  <p>Where and when to go outdoors: live weather, air quality and OpenStreetMap context, with a small open language model.</p>
-</header>
+<header><div class="head-inner">
+  <p class="eyebrow">GeoAI · Outdoor intelligence</p>
+  <h1>Make a little more room for outside.</h1>
+  <p>Find a place and time for your next outdoor activity, informed by live weather, air quality and OpenStreetMap context.</p>
+</div></header>
 <main>
-  <div class="row">
-    <input id="q" placeholder="e.g. Where can I run tomorrow evening near Koregaon Park?" autofocus>
-    <button id="go">Ask</button>
-  </div>
-  <div class="chips" id="chips"></div>
-  <div id="status"></div>
-  <div class="grid" id="grid" style="display:none">
-    <div class="card"><div id="answer"></div><div id="meta"></div></div>
-    <div><div id="map"></div></div>
-  </div>
-  <footer>
-    Map data &copy; OpenStreetMap contributors. Weather and air quality: Open-Meteo.
-    Language model: Qwen2.5-1.5B-Instruct (open weights). Not medical advice.
-  </footer>
+  <section class="search-panel" aria-label="Ask the outdoor assistant">
+    <label class="search-label" for="q">What are you planning?</label>
+    <div class="search-row"><input id="q" maxlength="500" placeholder="e.g. Where can I run tomorrow evening near Koregaon Park?" autocomplete="off"><button id="go" type="button">Get guidance <span aria-hidden="true">→</span></button></div>
+    <p class="examples-label">Try an example</p><div class="chips" id="chips"></div>
+  </section>
+  <div id="status" role="status" aria-live="polite"></div>
+  <section class="grid" id="grid" hidden aria-label="Assistant response">
+    <div class="stack">
+      <article class="card recommendation" id="rec-card" hidden>
+        <p class="section-kicker">Top recommendation</p><div class="rec-top"><div><h2 class="rec-place" id="rec-place"></h2><p class="rec-time" id="rec-time"></p></div><span class="rating" id="rec-rating" hidden></span></div>
+        <div class="rec-details" id="rec-details"></div>
+      </article>
+      <article class="card" id="conditions-card" hidden>
+        <p class="section-kicker">Conditions in the recommended window</p><div class="metric-grid" id="metrics"></div>
+        <div id="extras"></div>
+      </article>
+      <article class="card" id="alternatives-card" hidden><p class="section-kicker">Other options</p><div class="alternatives" id="alternatives"></div></article>
+      <article class="card"><p class="section-kicker">Assistant guidance</p><div id="answer"></div><div id="meta"></div></article>
+    </div>
+    <div class="stack"><div id="map" role="application" aria-label="Map of recommended places"></div><p class="map-caption" id="map-caption">Place markers are based on coordinates returned by the assistant. Map data © OpenStreetMap contributors.</p></div>
+  </section>
+  <footer>Map data © OpenStreetMap contributors. Weather and air quality: Open-Meteo. Language model: Qwen2.5-1.5B-Instruct (open weights). Not medical advice.</footer>
 </main>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script>
+"use strict";
 const $ = id => document.getElementById(id);
 const EXAMPLES = [
   "Where can I run tomorrow evening near Koregaon Park?",
@@ -62,69 +118,109 @@ const EXAMPLES = [
 ];
 let map = null, layer = null;
 
-function esc(s) { return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
-
+function esc(value) {
+  return String(value == null ? "" : value).replace(/[&<>"']/g, ch => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"})[ch]);
+}
+function safeText(value) { return typeof value === "string" || typeof value === "number" ? String(value) : ""; }
 function md(text) {
   let html = "", inList = false;
-  for (const raw of esc(text).split("\n")) {
-    const l = raw.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>").replace(/\*(.+?)\*/g, "<em>$1</em>");
-    if (raw.startsWith("- ")) {
+  for (const raw of esc(safeText(text)).split("\n")) {
+    const line = raw.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>").replace(/\*(.+?)\*/g, "<em>$1</em>");
+    if (/^\s*- /.test(raw)) {
       if (!inList) { html += "<ul>"; inList = true; }
-      html += "<li>" + l.slice(2) + "</li>";
+      html += "<li>" + line.replace(/^\s*- /, "") + "</li>";
     } else {
       if (inList) { html += "</ul>"; inList = false; }
-      if (l.trim()) html += "<p>" + l + "</p>";
+      if (line.trim()) html += "<p>" + line + "</p>";
     }
   }
   if (inList) html += "</ul>";
   return html;
 }
-
+function metric(label, value, unit) {
+  if (value === null || value === undefined || value === "") return "";
+  return '<div class="metric"><span class="metric-label">' + esc(label) + '</span><span class="metric-value">' + esc(value) + (unit ? ' <span class="metric-unit">' + esc(unit) + '</span>' : "") + "</span></div>";
+}
+function renderFacts(facts) {
+  const rec = facts && facts.recommendation;
+  $("rec-card").hidden = !rec || typeof rec !== "object";
+  $("conditions-card").hidden = true;
+  $("alternatives-card").hidden = true;
+  if (!rec || typeof rec !== "object") return;
+  $("rec-place").textContent = safeText(rec.place) || "Recommended place";
+  const time = [safeText(rec.day_name), safeText(rec.time_range)].filter(Boolean).join(" · ") || safeText(rec.window);
+  $("rec-time").textContent = time;
+  $("rec-rating").hidden = rec.rating == null || rec.rating === "";
+  $("rec-rating").textContent = safeText(rec.rating);
+  const details = [];
+  if (rec.distance_km != null) details.push("<span><b>↗</b> " + esc(rec.distance_km) + " km away</span>");
+  if (rec.score != null) details.push("<span><b>●</b> Score " + esc(rec.score) + "</span>");
+  $("rec-details").innerHTML = details.join("");
+  const c = facts.conditions_in_window && typeof facts.conditions_in_window === "object" ? facts.conditions_in_window : null;
+  const metrics = c ? [
+    metric("Feels like", c.feels_like_min_c != null && c.feels_like_max_c != null ? c.feels_like_min_c + "–" + c.feels_like_max_c : c.feels_like_max_c, "°C"),
+    metric("Rain chance", c.rain_chance_pct, "%"), metric("Wind", c.wind_kmh, "km/h"),
+    metric("Wind from", c.wind_from, ""), metric("UV index", c.uv_index, ""),
+    metric("Air quality", c.aqi_min != null && c.aqi_max != null ? c.aqi_min + "–" + c.aqi_max : c.aqi_max, "AQI")
+  ].filter(Boolean) : [];
+  const extra = [];
+  if (facts.sunrise || facts.sunset) extra.push('<p class="subsection">Daylight</p><div class="tag-list">' + (facts.sunrise ? '<span class="tag">Sunrise ' + esc(facts.sunrise) + '</span>' : "") + (facts.sunset ? '<span class="tag">Sunset ' + esc(facts.sunset) + '</span>' : "") + "</div>");
+  if (Array.isArray(facts.avoid_times_for_best_place) && facts.avoid_times_for_best_place.length) extra.push('<p class="subsection">Times to avoid · from forecast</p><div class="tag-list">' + facts.avoid_times_for_best_place.map(x => '<span class="tag">' + esc(x) + "</span>").join("") + "</div>");
+  if (Array.isArray(facts.things_to_carry) && facts.things_to_carry.length) extra.push('<p class="subsection">Suggested to carry</p><div class="tag-list">' + facts.things_to_carry.map(x => '<span class="tag">' + esc(x) + "</span>").join("") + "</div>");
+  $("metrics").innerHTML = metrics.join(""); $("extras").innerHTML = extra.join("");
+  $("conditions-card").hidden = !metrics.length && !extra.length;
+  const options = Array.isArray(facts.other_options) ? facts.other_options : [];
+  $("alternatives").innerHTML = options.map(o => {
+    if (!o || typeof o !== "object") return "";
+    const name = safeText(o.place); if (!name) return "";
+    const meta = [safeText(o.rating), o.distance_km != null ? o.distance_km + " km" : "", safeText(o.window)].filter(Boolean).join(" · ");
+    return '<div class="alternative"><span class="alternative-name">' + esc(name) + '</span><span class="alternative-meta">' + esc(meta) + "</span></div>";
+  }).join("");
+  $("alternatives-card").hidden = !$("alternatives").innerHTML;
+}
 function showMap(points) {
-  if (!points || !points.length) { $("map").style.display = "none"; return; }
-  $("map").style.display = "block";
+  const valid = Array.isArray(points) ? points.filter(p => p && p.lat != null && p.lon != null && p.lat !== "" && p.lon !== "" && Number.isFinite(Number(p.lat)) && Number.isFinite(Number(p.lon)) && Number(p.lat) >= -90 && Number(p.lat) <= 90 && Number(p.lon) >= -180 && Number(p.lon) <= 180) : [];
+  if (!valid.length || typeof L === "undefined") { $("map").hidden = true; $("map-caption").hidden = true; return; }
+  $("map").hidden = false; $("map-caption").hidden = false;
   if (!map) {
     map = L.map("map");
-    L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png",
-      { maxZoom: 19, attribution: "&copy; OpenStreetMap contributors" }).addTo(map);
+    L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom:19, attribution:"&copy; OpenStreetMap contributors" }).addTo(map);
     layer = L.layerGroup().addTo(map);
   }
-  layer.clearLayers();
-  const bounds = [];
-  for (const p of points) {
-    const icon = L.divIcon({ className: "", html: '<div class="pin">' + p.rank + "</div>", iconSize: [28, 28], iconAnchor: [14, 14] });
-    L.marker([p.lat, p.lon], { icon }).addTo(layer).bindPopup("#" + p.rank + " " + esc(p.name));
-    bounds.push([p.lat, p.lon]);
+  layer.clearLayers(); const bounds = [];
+  for (const p of valid) {
+    const lat = Number(p.lat), lon = Number(p.lon), rank = safeText(p.rank);
+    const icon = L.divIcon({ className:"", html:'<div class="pin">' + esc(rank || "•") + "</div>", iconSize:[30,30], iconAnchor:[15,15] });
+    L.marker([lat,lon], {icon}).addTo(layer).bindPopup((rank ? "#" + esc(rank) + " " : "") + esc(p.name || "Place"));
+    bounds.push([lat,lon]);
   }
-  if (bounds.length === 1) map.setView(bounds[0], 14); else map.fitBounds(bounds, { padding: [40, 40] });
-  setTimeout(() => map.invalidateSize(), 100);
+  if (bounds.length === 1) map.setView(bounds[0],14); else map.fitBounds(bounds,{padding:[34,34], maxZoom:14});
+  setTimeout(() => map.invalidateSize(),100);
 }
-
 async function ask(q) {
-  q = q.trim();
-  if (!q) return;
-  $("go").disabled = true;
-  $("status").textContent = "Fetching live data and thinking... (usually 10-25 s)";
+  q = safeText(q).trim(); if (!q || $("go").disabled) return;
+  $("go").disabled = true; $("status").dataset.state = "loading";
+  $("status").textContent = "Checking live conditions and finding suitable places…";
   try {
-    const r = await fetch("/ask", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ question: q }) });
-    const d = await r.json();
-    $("grid").style.display = "grid";
-    $("answer").innerHTML = md(d.answer || "No answer returned.");
-    const w = d.writer ? (" | summary by " + (d.writer.mode === "slm" ? "the language model (verified)" : "template (model output failed the check)")) : "";
-    $("meta").textContent = "Answered in " + d.seconds + " s" + w;
-    showMap(d.map);
-    $("status").textContent = "";
+    const r = await fetch("/ask", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({question:q}) });
+    let d;
+    try { d = await r.json(); } catch (_) { throw new Error("The assistant returned an unreadable response."); }
+    if (!r.ok) throw new Error((d && d.detail) || "The assistant could not complete that request.");
+    $("grid").hidden = false;
+    $("answer").innerHTML = md(d && d.answer ? d.answer : "No answer returned.");
+    renderFacts(d && d.facts);
+    const writer = d && d.writer ? " · summary by " + (d.writer.mode === "slm" ? "language model (verified)" : "template") : "";
+    $("meta").textContent = (d && d.seconds != null ? "Answered in " + d.seconds + " s" : "") + writer;
+    showMap(d && d.map);
+    $("status").dataset.state = ""; $("status").textContent = "";
   } catch (e) {
-    $("status").textContent = "Could not reach the assistant. Please try again.";
-  }
-  $("go").disabled = false;
+    $("status").dataset.state = "error";
+    $("status").textContent = e && e.message && e.message.length < 220 ? e.message : "Could not reach the assistant. Please try again.";
+  } finally { $("go").disabled = false; }
 }
-
 for (const ex of EXAMPLES) {
-  const b = document.createElement("button");
-  b.className = "chip"; b.textContent = ex;
-  b.onclick = () => { $("q").value = ex; ask(ex); };
-  $("chips").appendChild(b);
+  const b = document.createElement("button"); b.type = "button"; b.className = "chip"; b.textContent = ex;
+  b.onclick = () => { $("q").value = ex; ask(ex); }; $("chips").appendChild(b);
 }
 $("go").onclick = () => ask($("q").value);
 $("q").addEventListener("keydown", e => { if (e.key === "Enter") ask($("q").value); });

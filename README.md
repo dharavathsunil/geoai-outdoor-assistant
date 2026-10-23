@@ -7,14 +7,14 @@ An assistant that tells you **where and when** to go for an outdoor activity, wh
 ## Live endpoint
 | What | URL |
 |---|---|
-| Web page with map | https://<NGROK-DOMAIN>/ui |
-| API docs (try it) | https://<NGROK-DOMAIN>/docs |
-| Ask (GET) | https://<NGROK-DOMAIN>/ask?q=Where%20can%20I%20run%20tomorrow%20evening%20near%20Koregaon%20Park%3F |
-| Ask (POST) | `POST https://<NGROK-DOMAIN>/ask` with `{"question": "..."}` |
-| Health | https://<NGROK-DOMAIN>/health |
+| Web page with map | https://buccaneer-chug-brewing.ngrok-free.dev/ui |
+| API docs (try it) | https://buccaneer-chug-brewing.ngrok-free.dev/docs |
+| Ask (GET) | https://buccaneer-chug-brewing.ngrok-free.dev/ask?q=Where%20can%20I%20run%20tomorrow%20evening%20near%20Koregaon%20Park%3F |
+| Ask (POST) | `POST https://buccaneer-chug-brewing.ngrok-free.dev/ask` with `{"question": "..."}` |
+| Health | https://buccaneer-chug-brewing.ngrok-free.dev/health |
 
 ```bash
-curl -X POST https://<NGROK-DOMAIN>/ask -H "Content-Type: application/json" \
+curl -X POST https://buccaneer-chug-brewing.ngrok-free.dev/ask -H "Content-Type: application/json" \
   -d '{"question": "I have mild asthma, where is good for a morning walk near Powai in the next two days?"}'
 ```
 
@@ -56,7 +56,7 @@ Map data (c) OpenStreetMap contributors. Responses to Overpass and geocoding are
 ## Run it yourself
 Requires Python 3.11.
 ```bash
-git clone https://github.com/<github-username>/geoai-outdoor-assistant.git
+git clone https://github.com/dharavathsunil/geoai-outdoor-assistant.git
 cd geoai-outdoor-assistant
 python -m venv .venv
 .venv\Scripts\activate            # Windows (use source .venv/bin/activate on Linux or macOS)
