@@ -7,7 +7,7 @@ from pathlib import Path
 
 import requests
 
-HEADERS = {"User-Agent": "geoai-hackathon-dharavathsunil/0.1 (student project; contact: YOUR_EMAIL_HERE)"}
+HEADERS = {"User-Agent": "geoai-hackathon-dharavathsunil/0.1 (student project; https://github.com/dharavathsunil/geoai-outdoor-assistant)"}
 GEO_CACHE = Path(".cache") / "geocode.json"
 _geo_lock = threading.Lock()
 _last_nominatim = [0.0]
